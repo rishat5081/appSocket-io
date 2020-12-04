@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Socket Io chat Room </title>
+
+    <meta name="viewport" content="width=device-width , initial-scale=1">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+    crossorigin="anonymous">
+
+  </head>
+
+
+  <body>
+
+
+    <div id="app">
+        <div class="container">
+
+
+
+<div class="col-lg-6 offset-lg-3">
+
+        <div v-if="!initializing_name">
+          <h4>Set Your Profile :)</h4>
+          <form @submit.prevent="setProfile">
+              <div class="form-group row">
+                <input type="text" class="form-control col-9" v-model="name"
+                 placeholder="Type Name Here" >
+                 <input type="submit"  value="Add" class="btn btn-sm btn-info ml-1">
+              </div>
+      </form>
+
+        </div>
+        <h1 v-else> {{name}}</h1>
+              <div class="card bg-info" v-if="initializing_name">
+                  <div class="card-header text-white">
+                    First Chat
+                  </div>
+
+                  <ul class="list-group list-group-flush text-right">
+                    <small v-if ="typing" class="text-white"> User is typing </small>
+                    <li class="list-group-item" v-for="message in messages">
+                    <span :class="{'float-left': message.type === 1}">
+                       {{message.message}}
+                    </span>
+                    </li>
+                  </ul>
+
+                  <div class="card-body">
+                    <form @submit.prevent="send">
+                        <div class="form-group">
+                          <input type="text" class="form-control" v-model="newmessage"
+                           placeholder="Type Message Here" >
+                        </div>
+                </form>
+
+                  </div>
+              </div>
+</div>
+</div>
+</div>
+    <script src = "/socket.io/socket.io.js"></script>
+
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.2/vue.js"></script>
+
+    <script>
+      //initializing the socket here
+      var socket = io();
+
+      //initializing the VUE here
+
+     new Vue({
+        el :'#app',
+        data:
+        {
+          newmessage : null,
+          messages : [],
+          typing : false,
+          name : null,
+          initializing_name : false
+        },
+        watch :
+        {
+          newmessage(value)
+          {
+            value ? socket.emit('typing') : socket.emit('notTyping');
+          }
+        },
+
+        methods :
+        {
+          send()
+          {
+              this.messages.push ({message: this.newmessage , type:0 });
+              socket.emit('chat-message', this.newmessage);
+              this.newmessage =null;
+          },
+          setProfile()
+          {
+            this.initializing_name =true;
+          }
+        },
+        
+        created()
+        {
+          socket.emit('Socket Created' , 'Saad is good');
+          socket.on('Socket Created',function(data)
+          {
+            console.log(data)
+          });
+
+          socket.on('chat-message',(data)=>
+        {
+            this.messages.push({message:data ,type: 1})
+        });
+
+        socket.on('typing', () =>
+      {
+        this.typing = true;
+      });
+
+      socket.on ('notTyping', () =>
+    {
+      this.typing = false;
+    })
+
+
+      }
+    })
+    </script>
+  </body>
+</html>
